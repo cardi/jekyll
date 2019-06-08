@@ -115,6 +115,7 @@ module Jekyll
 
       raise ArgumentError, "limit_posts must be a non-negative number" if limit_posts.negative?
 
+      printf "[jekyll/site.rb] in reset(), call clear_if_config_changed\n"
       Jekyll::Cache.clear_if_config_changed config
       Jekyll::Hooks.trigger :site, :after_reset, self
     end

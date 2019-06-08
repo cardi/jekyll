@@ -27,6 +27,7 @@ module Jekyll
 
       # Clear all caches
       def clear
+        printf "[jekyll/cache.rb] clear called, delete all caches\n"
         delete_cache_files
         base_cache.each_value(&:clear)
       end
@@ -36,13 +37,27 @@ module Jekyll
       #
       # Returns nothing.
       def clear_if_config_changed(config)
+        printf "[jekyll/cache.rb] config: %s\n", config
         config = config.inspect
         cache = Jekyll::Cache.new "Jekyll::Cache"
+
+        Pry::ColorPrinter.pp(config)
+
+        printf "[jekyll/cache.rb] clear_if_config_changed - config in cache? %s\n", cache.key?("config")
+        printf "[jekyll/cache.rb] clear_if_config_changed - current config == %s\n", config
+
+        if cache.key?("config")
+          printf "[jekyll/cache.rb] clear_if_config_changed - cached config == %s\n", cache["config"]
+        end
+
         return if cache.key?("config") && cache["config"] == config
 
+        printf "[jekyll/cache.rb] clear_if_config_changed - config != cached(config), CALL CLEAR\n"
         clear
         cache = Jekyll::Cache.new "Jekyll::Cache"
         cache["config"] = config
+
+        printf "[jekyll/cache.rb] clear_if_config_changed - new cached config := %s\n", cache["config"]
         nil
       end
 
@@ -79,7 +94,15 @@ module Jekyll
     #
     # Returns cached value
     def [](key)
+      if key == "config"
+        printf "[jekyll/cache.rb] requested 'config' in cache\n"
+      end
+
       return @cache[key] if @cache.key?(key)
+
+      if key == "config"
+        printf "[jekyll/cache.rb] 'config' not in cache, so load from disk\n"
+      end
 
       path = path_to(hash(key))
       if disk_cache_enabled? && File.file?(path) && File.readable?(path)
@@ -126,12 +149,15 @@ module Jekyll
     # Returns true if key exists in the cache, false otherwise
     def key?(key)
       # First, check if item is already cached in memory
+      printf "[jekyll/cache.rb] check if key in memory, key is %s\n", key
       return true if @cache.key?(key)
+
       # Otherwise, it might be cached on disk
       # but we should not consider the disk cache if it is disabled
       return false unless disk_cache_enabled?
 
       path = path_to(hash(key))
+      printf "[jekyll/cache.rb] path on disk: %s, is it a file? %s, is it readable? %s\n", path, File.file?(path), File.readable?(path)
       File.file?(path) && File.readable?(path)
     end
 
@@ -167,6 +193,8 @@ module Jekyll
     def load(path)
       raise unless disk_cache_enabled?
 
+      printf "[jekyll/cache.rb] load from disk: %s\n", path
+
       cached_file = File.open(path, "rb")
       value = Marshal.load(cached_file)
       cached_file.close
@@ -180,6 +208,8 @@ module Jekyll
     # Returns nothing.
     def dump(path, value)
       return unless disk_cache_enabled?
+
+      printf "[jekyll/cache.rb] dump to disk: %s : %s\n", path, value
 
       FileUtils.mkdir_p(File.dirname(path))
       File.open(path, "wb") do |cached_file|
