@@ -41,7 +41,7 @@ module Jekyll
         config = config.inspect
         cache = Jekyll::Cache.new "Jekyll::Cache"
 
-        Pry::ColorPrinter.pp(config)
+        #Pry::ColorPrinter.pp(config)
 
         printf "[jekyll/cache.rb] clear_if_config_changed - config in cache? %s\n", cache.key?("config")
         printf "[jekyll/cache.rb] clear_if_config_changed - current config == %s\n", config
