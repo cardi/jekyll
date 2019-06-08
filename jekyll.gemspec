@@ -5,7 +5,7 @@ require_relative "lib/jekyll/version"
 
 Gem::Specification.new do |s|
   s.name          = "jekyll"
-  s.version       = Jekyll::VERSION
+  s.version       = "4.9.9"
   s.license       = "MIT"
   s.authors       = ["Tom Preston-Werner", "Parker Moore", "Matt Rogers"]
   s.email         = ["maintainers@jekyllrb.com"]
