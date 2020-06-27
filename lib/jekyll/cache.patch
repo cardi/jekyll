@@ -1,0 +1,100 @@
+--- cache.rb	2019-06-07 19:34:03.000000000 -0700
++++ cache.patched.rb	2019-06-07 19:38:40.000000000 -0700
+@@ -1,6 +1,9 @@
+ # frozen_string_literal: true
+ 
+ require "digest"
++require "ap"
++require "pp"
++require "pry"
+ 
+ module Jekyll
+   class Cache
+@@ -27,6 +30,7 @@
+ 
+       # Clear all caches
+       def clear
++        printf "[clear] called\n"
+         delete_cache_files
+         base_cache.each_value(&:clear)
+       end
+@@ -36,13 +40,27 @@
+       #
+       # Returns nothing.
+       def clear_if_config_changed(config)
++        printf "config: %s\n", config
+         config = config.inspect
+         cache = Jekyll::Cache.new "Jekyll::Cache"
++
++        Pry::ColorPrinter.pp(config)
++
++        printf "[clear_if_config_changed] config in cache? %s\n", cache.key?("config")
++        printf "[clear_if_config_changed] current config == %s\n", config
++
++        if cache.key?("config")
++          printf "[clear_if_config_changed] cached config == %s\n", cache["config"]
++        end
++
+         return if cache.key?("config") && cache["config"] == config
+ 
++        printf "[clear_if_config_changed] config != cached(config) => CALL CLEAR\n"
+         clear
+         cache = Jekyll::Cache.new "Jekyll::Cache"
+         cache["config"] = config
++
++        printf "[clear_if_config_changed] cached config := %s\n", cache["config"]
+         nil
+       end
+ 
+@@ -79,8 +97,16 @@
+     #
+     # Returns cached value
+     def [](key)
++      if key == "config"
++        printf "[](key) - requested 'config'\n"
++      end
++
+       return @cache[key] if @cache.key?(key)
+ 
++      if key == "config"
++        printf "[](key) - 'config' not in cache, so load it up\n"
++      end
++
+       path = path_to(hash(key))
+       if disk_cache_enabled? && File.file?(path) && File.readable?(path)
+         @cache[key] = load(path)
+@@ -126,12 +152,16 @@
+     # Returns true if key exists in the cache, false otherwise
+     def key?(key)
+       # First, check if item is already cached in memory
++      printf "key: %s\n", key
++      printf "1\n"
+       return true if @cache.key?(key)
++      printf "2\n"
+       # Otherwise, it might be cached on disk
+       # but we should not consider the disk cache if it is disabled
+       return false unless disk_cache_enabled?
+ 
+       path = path_to(hash(key))
++      printf "3: %s, %s, %s\n", path, File.file?(path), File.readable?(path)
+       File.file?(path) && File.readable?(path)
+     end
+ 
+@@ -167,6 +197,8 @@
+     def load(path)
+       raise unless disk_cache_enabled?
+ 
++      printf "[load] %s\n", path
++
+       cached_file = File.open(path, "rb")
+       value = Marshal.load(cached_file)
+       cached_file.close
+@@ -181,6 +213,8 @@
+     def dump(path, value)
+       return unless disk_cache_enabled?
+ 
++      printf "[dump] %s : %s\n", path, value
++
+       FileUtils.mkdir_p(File.dirname(path))
+       File.open(path, "wb") do |cached_file|
+         Marshal.dump(value, cached_file)
