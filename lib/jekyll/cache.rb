@@ -195,10 +195,15 @@ module Jekyll
 
       printf "[jekyll/cache.rb] load from disk: %s\n", path
 
-      cached_file = File.open(path, "rb")
-      value = Marshal.load(cached_file)
-      cached_file.close
-      value
+      #cached_file = File.open(path, "rb")
+      #value = Marshal.load(cached_file)
+      #cached_file.close
+
+      File.open(path, "rb") do |cached_file|
+        printf "[jekyll/cache.rb] bruh\n".green
+        @value = Marshal.load(cached_file)
+      end
+      @value
     end
     # rubocop:enable Security/MarshalLoad
 
@@ -209,7 +214,7 @@ module Jekyll
     def dump(path, value)
       return unless disk_cache_enabled?
 
-      printf "[jekyll/cache.rb] dump to disk: %s : %s\n", path, value
+      #printf "[jekyll/cache.rb] dump to disk: %s : %s\n", path, value
 
       FileUtils.mkdir_p(File.dirname(path))
       File.open(path, "wb") do |cached_file|
